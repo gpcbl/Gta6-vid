@@ -1,8 +1,8 @@
 # GTA VI Feed
 
-Tracks the most-watched GTA 6 videos on YouTube. GitHub Actions updates it every hour, and a page on GitHub Pages lets you browse it.
+Tracks the most-watched English GTA 6 videos on YouTube. GitHub Actions updates it every hour, and a page on GitHub Pages lets you browse it.
 
-**Page tabs:** English gameplay and All gameplay (screened, see below), Hot (most views per hour over the past week), Today, This week, This month, All time, Newest, Rockstar (official videos only), and Saved. There's also a search box and a Hide Shorts switch.
+**Page tabs:** Gameplay (screened, see below), Hot (most views per hour over the past week), Today, This week, This month, All time, Newest, Rockstar (official videos only), and Saved. There's also a search box and a Hide Shorts switch.
 
 **Output** (in the `docs/` folder):
 - `index.html`: the web page
@@ -21,11 +21,12 @@ The **Gameplay** tab shows only videos that pass every check in `gameplay_screen
 | Gaming category | `gaming_category_only` true | Drops vlogs and news channels |
 | Popular | `min_views` 10,000 | Drops videos nobody is watching |
 | Title words | `exclude_title_words` | Drops trailers, reviews, reactions, leaks, comparisons, GTA 5 videos and the like |
-| Language | `audio_languages` (empty = all) | Leave empty: the page already splits English into its own tab |
 
 Title words are only used to exclude videos, never required, because a lot of gameplay isn't titled in English. Words match whole words, ignoring case and accents.
 
-Passing videos are ranked **Rising** by default: views per hour since upload, which surfaces videos that are both new and popular. You can also sort by Most viewed or Newest. The **English gameplay** tab shows passing videos whose YouTube audio language is English; **All gameplay** shows every language.
+Passing videos are ranked **Rising** by default: views per hour since upload, which surfaces videos that are both new and popular. You can also sort by Most viewed or Newest. ## English only
+
+Every search asks YouTube for English results, and after each run any video whose language isn't in `languages` (in `config.json`) is dropped. The default is `["en", "zxx"]`: `zxx` is YouTube's tag for videos with no spoken language, which covers no-commentary gameplay with English titles. Remove `"zxx"` to drop those too, or set `languages` to `[]` to allow every language.
 
 ## How it finds videos
 
@@ -51,14 +52,16 @@ The free quota is 10,000 units a day. Each search costs 100 units, and looking u
 
 | Search | Runs | Units a day |
 |---|---|---|
-| English gameplay, past 6 hours | every hour | 2,400 |
-| Gameplay (all languages), past 6 hours | every hour | 2,400 |
-| Gameplay 4–20 min and 20+ min, past day | every 3 hours | 1,600 |
-| Most viewed this week and this month | every 6 hours | 800 |
-| Most viewed all time | once a day | 100 |
-| Stat refreshes for every tracked video | every hour | about 200 |
+| Gameplay, past 6 hours | every hour | 2,400 |
+| Gameplay 4–20 min, past day | every 2 hours | 1,200 |
+| Gameplay 20+ min, past day | every 2 hours | 1,200 |
+| Most viewed this week | every 2 hours | 1,200 |
+| Most viewed past day | every 3 hours | 800 |
+| Most viewed this month | every 4 hours | 600 |
+| Most viewed all time | every 6 hours | 400 |
+| Stat refreshes for every tracked video | every hour | about 150 |
 
-That's about 7,500 a day, which leaves room for a few manual runs (about 700 units each, since a manual **Run workflow** runs every search). If you add searches, keep the total under 10,000. If the quota runs out, the run still finishes using the channel feeds, and the quota resets at midnight Pacific time.
+That's about 7,950 a day, which leaves room for two or three manual runs (about 700 units each, since a manual **Run workflow** runs every search). If you add searches, keep the total under 10,000. If the quota runs out, the run still finishes using the channel feeds, and the quota resets at midnight Pacific time.
 
 ## Customizing
 

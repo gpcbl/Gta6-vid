@@ -1,15 +1,19 @@
 {
   "title": "GTA VI Feed",
-  "description": "The most-watched GTA 6 videos on YouTube, with screened gameplay updated every hour.",
+  "description": "The most-watched English GTA 6 videos on YouTube, with screened gameplay updated every hour.",
   "link": "https://gpcbl.github.io/gta6-vid/",
+  "languages": [
+    "en",
+    "zxx"
+  ],
   "searches": [
-    {"label": "English gameplay, past 6 hours", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 6, "gaming_only": true, "language": "en", "every_hours": 1},
-    {"label": "Gameplay, past 6 hours", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 6, "gaming_only": true, "every_hours": 1},
-    {"label": "Gameplay 4-20 min, past day", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 24, "duration": "medium", "gaming_only": true, "every_hours": 3},
-    {"label": "Gameplay 20+ min, past day", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 24, "duration": "long", "gaming_only": true, "every_hours": 3},
-    {"label": "This week", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 168, "every_hours": 6},
-    {"label": "This month", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 720, "every_hours": 6},
-    {"label": "All time", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "every_hours": 24}
+    {"label": "Gameplay, past 6 hours", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 6, "gaming_only": true, "language": "en", "every_hours": 1},
+    {"label": "Gameplay 4-20 min, past day", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 24, "duration": "medium", "gaming_only": true, "language": "en", "every_hours": 2},
+    {"label": "Gameplay 20+ min, past day", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 24, "duration": "long", "gaming_only": true, "language": "en", "every_hours": 2},
+    {"label": "Past day", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 24, "language": "en", "every_hours": 3},
+    {"label": "This week", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 168, "language": "en", "every_hours": 2},
+    {"label": "This month", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 720, "language": "en", "every_hours": 4},
+    {"label": "All time", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "language": "en", "every_hours": 6}
   ],
   "results_per_search": 50,
   "gameplay_screen": {
@@ -18,7 +22,6 @@
     "min_minutes": 5,
     "min_views": 10000,
     "gaming_category_only": true,
-    "audio_languages": [],
     "exclude_title_words": [
       "trailer",
       "reaction",

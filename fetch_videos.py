@@ -1,4 +1,4 @@
-"""Collect the most popular GTA 6 videos on YouTube.
+"""Collect the most popular English GTA 6 videos on YouTube.
 
 Two sources, both optional, combined into one list:
 
@@ -245,9 +245,6 @@ def gameplay_check(v, screen):
         return "not Gaming category"
     if (v.get("views") or 0) < screen.get("min_views", 0):
         return "too few views"
-    langs = screen.get("audio_languages") or []
-    if langs and v.get("lang") not in langs:
-        return "language"
     title = " " + plain_words(v.get("title", "")) + " "
     for word in screen.get("exclude_title_words", []):
         if " " + plain_words(word) + " " in title:
@@ -347,6 +344,16 @@ def main():
     else:
         print("No YOUTUBE_API_KEY set: using channel feeds only (see README to add one).")
 
+    # Keep only the languages listed in config.json. Videos with no language
+    # info (channel-feed-only runs) are kept.
+    langs = set(config.get("languages") or [])
+    if langs:
+        dropped = [vid for vid, v in videos.items() if v.get("lang") and v["lang"] not in langs]
+        for vid in dropped:
+            del videos[vid]
+        if dropped:
+            print(f"Dropped {len(dropped)} videos not in {', '.join(sorted(langs))}.")
+
     screen = config.get("gameplay_screen", {})
     for v in videos.values():
         v["official"] = v.get("channel_id") in official
@@ -355,9 +362,7 @@ def main():
         elif v.get("duration"):
             v["short"] = v["duration"] <= 60 or v.get("short", False)
         v["gameplay"] = gameplay_check(v, screen) is None
-    passed = [v for v in videos.values() if v["gameplay"]]
-    english = sum(v.get("lang") == "en" for v in passed)
-    print(f"Gameplay screen: {len(passed)} videos passed, {english} in English.")
+    print(f"Gameplay screen: {sum(v['gameplay'] for v in videos.values())} videos passed.")
 
     videos = prune(videos, config)
     items = sorted(videos.values(), key=lambda v: v.get("views") or 0, reverse=True)
