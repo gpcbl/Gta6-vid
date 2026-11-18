@@ -2,16 +2,34 @@
 
 Tracks the most-watched GTA 6 videos on YouTube. GitHub Actions updates the list every 2 hours, and a page on GitHub Pages lets you browse it.
 
-**Page tabs:** Hot (most views per hour over the past week), Today, This week, This month, All time, Newest, Rockstar (official videos only), and Saved. There's also a search box and a Hide Shorts switch.
+**Page tabs:** Gameplay (screened, see below), Hot (most views per hour over the past week), Today, This week, This month, All time, Newest, Rockstar (official videos only), and Saved. There's also a search box and a Hide Shorts switch.
 
 **Output** (in the `docs/` folder):
 - `index.html`: the web page
 - `videos.json`: every tracked video with views, likes, length and upload date
 - `feed.xml`: an RSS feed of the past two weeks' videos
 
+## Gameplay screen
+
+The **Gameplay** tab shows only videos that pass every check in `gameplay_screen` in `config.json`:
+
+| Check | Default | Why |
+|---|---|---|
+| Posted after launch | `posted_after` 2026-11-18 10:00 UTC | Anything earlier is a trailer, leak or fake |
+| Recent | `max_age_hours` 72 | Keeps it to the latest uploads |
+| Long enough | `min_minutes` 5 (live streams pass) | Drops Shorts and clips |
+| Gaming category | `gaming_category_only` true | Drops vlogs and news channels |
+| Popular | `min_views` 10,000 | Drops videos nobody is watching |
+| Title words | `exclude_title_words` | Drops trailers, reviews, reactions, leaks, comparisons, GTA 5 videos and the like |
+| Language | `audio_languages` (empty = all) | e.g. `["en"]` for English only |
+
+Title words are only used to exclude videos, never required, because a lot of gameplay isn't titled in English. Words match whole words, ignoring case and accents.
+
+Passing videos are ranked **Rising** by default: views per hour since upload, which surfaces videos that are both new and popular. You can also sort by Most viewed or Newest. Three of the searches are aimed at gameplay: Gaming-category videos from the past 6 hours, and 4–20 minute and 20+ minute videos from the past day.
+
 ## How it finds videos
 
-1. **YouTube search (recommended).** If a `YOUTUBE_API_KEY` secret is set, each run searches all of YouTube for GTA 6 videos sorted by view count, over the past day, week, month and all time. It also refreshes the view counts for every video already on the list and removes videos that were deleted or taken down.
+1. **YouTube search (recommended).** If a `YOUTUBE_API_KEY` secret is set, each run runs the searches listed in `config.json`, all sorted by view count: the three gameplay searches above, plus the most-viewed GTA 6 videos of the past week, month and all time. It also refreshes the view counts for every video already on the list and removes videos that were deleted or taken down.
 2. **Channel feeds (no setup).** Each run also reads the latest uploads from the channels in `config.json` and keeps the ones about GTA 6. On its own this only covers those channels.
 
 Each run adds to the previous list, so videos stay in it after they drop out of search results. The list keeps every video from the past 30 days plus the 150 most-viewed of all time.
@@ -29,13 +47,13 @@ Each run adds to the previous list, so videos stay in it after they drop out of 
 
 ## API quota
 
-The free quota is 10,000 units a day. Each search costs 100 units, and looking up stats costs 1 unit per 50 videos. With 4 searches every 2 hours, the feed uses about 5,000 units a day. If you add search windows or run it more often, keep the total under 10,000. When the quota runs out, the run still finishes using the channel feeds.
+The free quota is 10,000 units a day. Each search costs 100 units, and looking up stats costs 1 unit per 50 videos. With 6 searches every 2 hours, the feed uses about 7,300 units a day. If you add searches or run it more often, keep the total under 10,000. When the quota runs out, the run still finishes using the channel feeds.
 
 ## Customizing
 
 Edit `config.json`:
-- `search_query`: the YouTube search. `|` means OR.
-- `search_windows`: which time ranges to search (`"days": null` means all time).
+- `searches`: each has a `query` (`|` means OR), an optional `hours` window (leave it out for all time), an optional `duration` (`short` under 4 min, `medium` 4–20, `long` over 20), and `gaming_only` to limit it to the Gaming category.
+- `gameplay_screen`: the checks in the table above.
 - `keywords`: a channel-feed video is kept only if its title or description contains one of these.
 - `channels`: add a channel with its name and channel ID (the `UC…` code). To find it, open the channel on YouTube, tap **About → Share channel → Copy channel ID**. Mark official channels with `"official": true` so they appear under the Rockstar tab.
 

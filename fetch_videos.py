@@ -10,6 +10,9 @@ Two sources, both optional, combined into one list:
    channel's 15 latest uploads with their view counts; only GTA 6 videos are
    kept.
 
+Every video is then run through the gameplay screen (see gameplay_check)
+and flagged, so the page can show recent, popular gameplay on its own.
+
 Results are merged with the previous run's docs/videos.json, so the list
 builds up over time and view counts are refreshed whenever a video is seen
 again. Writes:
@@ -23,6 +26,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -42,6 +46,7 @@ NS = {
     "yt": "http://www.youtube.com/xml/schemas/2015",
     "media": "http://search.yahoo.com/mrss/",
 }
+GAMING = "20"  # YouTube's Gaming category
 UA = "Mozilla/5.0 (compatible; gta6-video-feed/1.0; +https://github.com)"
 
 
@@ -103,26 +108,31 @@ def is_gta6(text, keywords):
 # ---------------------------------------------------------------- API source
 
 def search_api(config, key, log):
-    """Video IDs from view-count-ordered searches over each time window."""
+    """Video IDs from the view-count-ordered searches listed in config.json."""
     ids = []
-    for window in config["search_windows"]:
+    for search in config["searches"]:
         params = {
             "part": "id",
             "type": "video",
-            "q": config["search_query"],
+            "q": search["query"],
             "order": "viewCount",
             "maxResults": min(50, config.get("results_per_search", 50)),
             "safeSearch": "moderate",
         }
-        if window.get("days"):
-            params["publishedAfter"] = iso(now() - timedelta(days=window["days"])).replace("+00:00", "Z")
+        if search.get("hours"):
+            since = now() - timedelta(hours=search["hours"])
+            params["publishedAfter"] = since.strftime("%Y-%m-%dT%H:%M:%SZ")
+        if search.get("duration"):
+            params["videoDuration"] = search["duration"]  # short <4 min, medium 4-20, long >20
+        if search.get("gaming_only"):
+            params["videoCategoryId"] = GAMING
         try:
             data = api("search", key, **params)
         except FetchError as exc:
-            log.append(f"Search '{window['label']}' failed: {exc}")
+            log.append(f"Search '{search['label']}' failed: {exc}")
             continue
         found = [i["id"]["videoId"] for i in data.get("items", []) if i.get("id", {}).get("videoId")]
-        print(f"  Search ({window['label']}): {len(found)} videos")
+        print(f"  {search['label']}: {len(found)} videos")
         ids.extend(found)
     return ids
 
@@ -153,6 +163,8 @@ def lookup_api(ids, key, log):
                 "comments": int(st["commentCount"]) if "commentCount" in st else None,
                 "duration": duration_seconds(v.get("contentDetails", {}).get("duration")),
                 "live": sn.get("liveBroadcastContent", "none"),
+                "category": sn.get("categoryId"),
+                "lang": (sn.get("defaultAudioLanguage") or sn.get("defaultLanguage") or "").split("-")[0].lower() or None,
             }
     return out
 
@@ -185,6 +197,50 @@ def fetch_channel(channel, keywords):
             "short": link is not None and "/shorts/" in link.get("href", ""),
         })
     return videos
+
+
+# ---------------------------------------------------------------- gameplay screen
+
+def plain_words(text):
+    """Lowercase, strip accents and punctuation: "ANÁLISIS!" -> "analisis"."""
+    text = unicodedata.normalize("NFKD", text.lower())
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]+", " ", text).strip()
+
+
+def gameplay_check(v, screen):
+    """Return None if the video passes the gameplay screen, else the reason it failed.
+
+    Passing means: posted since launch and within max_age_hours, long enough
+    not to be a Short or clip, in YouTube's Gaming category, enough views to
+    count as popular, and no title words that mark trailers, reactions,
+    leaks, comparisons and the like. Title words are only used to exclude,
+    because many gameplay titles aren't in English.
+    """
+    published = parse_time(v.get("published"))
+    if not published:
+        return "no date"
+    if screen.get("posted_after") and published < parse_time(screen["posted_after"]):
+        return "before launch"
+    if now() - published > timedelta(hours=screen.get("max_age_hours", 72)):
+        return "too old"
+    if v.get("live") == "upcoming":
+        return "not started"
+    if v.get("live") != "live":  # live streams have no length yet
+        if v.get("duration") is None or v["duration"] < screen.get("min_minutes", 5) * 60:
+            return "too short"
+    if screen.get("gaming_category_only") and v.get("category") and v["category"] != GAMING:
+        return "not Gaming category"
+    if (v.get("views") or 0) < screen.get("min_views", 0):
+        return "too few views"
+    langs = screen.get("audio_languages") or []
+    if langs and v.get("lang") not in langs:
+        return "language"
+    title = " " + plain_words(v.get("title", "")) + " "
+    for word in screen.get("exclude_title_words", []):
+        if " " + plain_words(word) + " " in title:
+            return f"title has '{word}'"
+    return None
 
 
 # ---------------------------------------------------------------- merge & output
@@ -278,10 +334,15 @@ def main():
     else:
         print("No YOUTUBE_API_KEY set: using channel feeds only (see README to add one).")
 
+    screen = config.get("gameplay_screen", {})
     for v in videos.values():
         v["official"] = v.get("channel_id") in official
-        if v.get("duration") is not None:
+        if v.get("live", "none") != "none":
+            v["short"] = False  # live and upcoming streams report no length
+        elif v.get("duration"):
             v["short"] = v["duration"] <= 60 or v.get("short", False)
+        v["gameplay"] = gameplay_check(v, screen) is None
+    print(f"Gameplay screen: {sum(v['gameplay'] for v in videos.values())} videos passed.")
 
     videos = prune(videos, config)
     items = sorted(videos.values(), key=lambda v: v.get("views") or 0, reverse=True)

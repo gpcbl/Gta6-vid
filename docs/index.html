@@ -44,6 +44,12 @@ h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text
 button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--hot);outline-offset:2px}
 .status{font-size:.84rem;color:var(--muted);margin:14px 0 2px}
 .status b{color:var(--fg);font-weight:600}
+.sorts{display:flex;gap:4px;margin:10px 0 0;font-size:.8rem}
+.sorts[hidden]{display:none}
+.sorts span{color:var(--muted);align-self:center;margin-right:4px}
+.sorts button{font:inherit;font-size:.8rem;border:1px solid var(--line);background:none;color:var(--muted);border-radius:6px;padding:3px 9px;cursor:pointer}
+.sorts button[aria-pressed="true"]{color:var(--fg);border-color:var(--hot)}
+.screen{font-size:.78rem;color:var(--muted);margin:6px 0 0;max-width:62ch}
 ol{list-style:none;margin:0;padding:0}
 li{display:grid;grid-template-columns:auto 168px minmax(0,1fr) auto;gap:4px 12px;align-items:start;padding:14px 0;border-bottom:1px solid var(--line)}
 .rank{font-family:var(--display);font-stretch:78%;font-weight:800;font-size:1.35rem;line-height:1;color:var(--muted);min-width:1.6em;text-align:right;padding-top:2px}
@@ -86,7 +92,9 @@ footer a{color:var(--hot)}
     <label class="toggle"><input type="checkbox" id="noshorts"> Hide Shorts</label>
   </div>
   <nav class="rail" id="rail" aria-label="Views"></nav>
+  <div class="sorts" id="sorts" hidden><span>Sort</span></div>
   <p class="status" id="status">Loading videos…</p>
+  <p class="screen" id="screen" hidden>Screened for gameplay: posted since launch and in the past 3 days, 5+ minutes long (or live), Gaming category, 10K+ views, and no trailers, reviews, reactions, leaks or comparisons in the title. Rising = views per hour since upload.</p>
   <ol id="list"></ol>
   <footer id="foot">View counts come from YouTube and refresh every two hours. Stars are saved on this device. <a href="feed.xml">RSS feed</a></footer>
 </div>
@@ -96,7 +104,9 @@ const age=v=>v.published?Date.now()-new Date(v.published):Infinity;
 const byViews=(a,b)=>(b.views||0)-(a.views||0);
 // "Hot" = views per hour since upload, for videos from the past week.
 const heat=v=>(v.views||0)/Math.max(age(v)/HOUR,2);
+const SORTS={"Rising":(a,b)=>heat(b)-heat(a),"Most viewed":byViews,"Newest":(a,b)=>age(a)-age(b)};
 const TABS=[
+  {name:"Gameplay",note:"screened gameplay since launch, past 3 days",keep:v=>v.gameplay,sort:null},
   {name:"Hot",note:"fastest-growing, past 7 days",keep:v=>age(v)<=7*DAY,sort:(a,b)=>heat(b)-heat(a)},
   {name:"Today",note:"most viewed, past 24 hours",keep:v=>age(v)<=DAY,sort:byViews},
   {name:"This week",note:"most viewed, past 7 days",keep:v=>age(v)<=7*DAY,sort:byViews},
@@ -106,7 +116,7 @@ const TABS=[
   {name:"Rockstar",note:"official Rockstar Games videos",keep:v=>v.official,sort:(a,b)=>age(a)-age(b)},
   {name:"Saved",note:"starred on this device",keep:v=>state.saved.has(v.id),sort:byViews},
 ];
-const state={tab:"Hot",q:"",noShorts:false,items:[],saved:new Set()};
+const state={tab:"Gameplay",gsort:"Rising",q:"",noShorts:false,items:[],saved:new Set()};
 try{state.saved=new Set(JSON.parse(localStorage.getItem("gta6-saved")||"[]"));state.noShorts=localStorage.getItem("gta6-noshorts")==="1"}catch(e){}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -139,27 +149,31 @@ function render(){
   const base=state.items.filter(v=>(!state.noShorts||!v.short)&&(!q||(v.title+" "+v.channel).toLowerCase().includes(q)));
   $("rail").innerHTML=TABS.map(t=>`<button type="button" data-t="${esc(t.name)}" aria-pressed="${t.name===state.tab}">${esc(t.name)}<span class="n">${base.filter(t.keep).length}</span></button>`).join("");
   const tab=TABS.find(t=>t.name===state.tab)||TABS[0];
-  const list=base.filter(tab.keep).sort(tab.sort);
+  const isG=tab.name==="Gameplay";
+  $("sorts").hidden=$("screen").hidden=!isG;
+  $("sorts").innerHTML="<span>Sort</span>"+Object.keys(SORTS).map(k=>`<button type="button" data-s="${k}" aria-pressed="${k===state.gsort}">${k}</button>`).join("");
+  const list=base.filter(tab.keep).sort(isG?SORTS[state.gsort]:tab.sort);
   $("status").innerHTML=`<b>${list.length}</b> ${list.length===1?"video":"videos"} · ${esc(tab.note)}${q?` · matching “${esc(state.q.trim())}”`:""}`;
   if(!list.length){
-    $("list").innerHTML=`<p class="empty">${tab.name==="Saved"?"Tap the star on any video to keep it here.":tab.name==="Today"?"No GTA 6 uploads in the past 24 hours yet.":"No videos match."}</p>`;
+    $("list").innerHTML=`<p class="empty">${tab.name==="Saved"?"Tap the star on any video to keep it here.":tab.name==="Today"?"No GTA 6 uploads in the past 24 hours yet.":isG?"No gameplay has passed the screen yet. It fills in after the next update.":"No videos match."}</p>`;
     return;
   }
   $("list").innerHTML=list.slice(0,150).map((v,i)=>{
     const url=`https://www.youtube.com/watch?v=${v.id}`;
     const on=state.saved.has(v.id);
     const live=v.live==="live"?'<span class="dur live">LIVE</span>':v.live==="upcoming"?'<span class="dur live">SOON</span>':v.duration!=null?`<span class="dur">${clock(v.duration)}</span>`:"";
-    const perHour=tab.name==="Hot"&&v.views?` · ${compact(Math.round(heat(v)))}/h`:"";
+    const perHour=(tab.name==="Hot"||isG)&&v.views?` · ${compact(Math.round(heat(v)))}/h`:"";
+    const likes=isG&&v.likes&&v.views?`<span>${(100*v.likes/v.views).toFixed(1)}% liked</span>`:"";
     return `<li>
       <span class="rank">${i+1}</span>
-      <a class="thumb" href="${url}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="https://i.ytimg.com/vi/${v.id}/mqdefault.jpg" alt="" loading="lazy">${live}</a>
+      <a class="thumb" href="${url}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="https://i.ytimg.com/vi/${v.id}/mqdefault.jpg" alt="" loading="lazy" onerror="this.remove()">${live}</a>
       <div class="info">
         <h2><a href="${url}" target="_blank" rel="noopener">${esc(decode(v.title))}</a></h2>
         <div class="meta">
           ${v.views!=null?`<span class="views">${compact(v.views)} views${perHour}</span>`:""}
           <span>${esc(decode(v.channel))}</span>
-          <span>${esc(ago(v.published))}</span>
-          ${v.official?'<span class="badge">Official</span>':""}${v.short?'<span class="badge">Short</span>':""}
+          <span>${esc(ago(v.published))}</span>${likes}
+          ${v.official?'<span class="badge">Official</span>':""}${v.short&&!v.live?.match(/live|upcoming/)?'<span class="badge">Short</span>':""}
         </div>
       </div>
       <button type="button" class="save" data-id="${esc(v.id)}" aria-pressed="${on}" aria-label="${on?"Remove from saved":"Save video"}">${on?"★":"☆"}</button>
@@ -168,6 +182,7 @@ function render(){
 }
 
 $("rail").addEventListener("click",e=>{const b=e.target.closest("button[data-t]");if(b){state.tab=b.dataset.t;render()}});
+$("sorts").addEventListener("click",e=>{const b=e.target.closest("button[data-s]");if(b){state.gsort=b.dataset.s;render()}});
 $("q").addEventListener("input",e=>{state.q=e.target.value;render()});
 $("noshorts").checked=state.noShorts;
 $("noshorts").addEventListener("change",e=>{state.noShorts=e.target.checked;try{localStorage.setItem("gta6-noshorts",state.noShorts?"1":"0")}catch(err){}render()});
@@ -178,13 +193,14 @@ $("list").addEventListener("click",e=>{
   render();
 });
 
-// Countdown in the subtitle until launch (Nov 19, 2026), then a plain label.
-const launch=new Date("2026-11-19T00:00:00-05:00");
+// Countdown until the first regional launch (New Zealand, midnight Nov 19 local), then "Out now".
+const launch=new Date("2026-11-18T11:00:00Z");
 const days=Math.ceil((launch-Date.now())/DAY);
 $("sub").textContent=days>1?`${days} days to launch · most-watched on YouTube`:days===1?"Launches tomorrow · most-watched on YouTube":"Out now · most-watched on YouTube";
 
 fetch("videos.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{
   state.items=(d.items||[]).filter(v=>okId(v.id));
+  if(!state.items.some(v=>v.gameplay))state.tab="Hot";
   $("updated").textContent=d.updated?`Updated ${ago(d.updated)}`:"";
   if(d.source==="rss")$("foot").insertAdjacentHTML("afterbegin","Showing videos from followed channels only. ");
   render();

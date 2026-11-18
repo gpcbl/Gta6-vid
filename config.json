@@ -3,14 +3,35 @@
   "description": "The most-watched GTA 6 videos on YouTube, ranked by views and updated every two hours.",
   "link": "https://gpcbl.github.io/gta6-vid/",
 
-  "search_query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"",
-  "search_windows": [
-    {"label": "Past day", "days": 1},
-    {"label": "This week", "days": 7},
-    {"label": "This month", "days": 30},
-    {"label": "All time", "days": null}
+  "searches": [
+    {"label": "Gameplay, past 6 hours", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 6, "gaming_only": true},
+    {"label": "Gameplay 4-20 min, past day", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 24, "duration": "medium", "gaming_only": true},
+    {"label": "Gameplay 20+ min, past day", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 24, "duration": "long", "gaming_only": true},
+    {"label": "This week", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 168},
+    {"label": "This month", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"", "hours": 720},
+    {"label": "All time", "query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\""}
   ],
   "results_per_search": 50,
+
+  "gameplay_screen": {
+    "posted_after": "2026-11-18T10:00:00Z",
+    "max_age_hours": 72,
+    "min_minutes": 5,
+    "min_views": 10000,
+    "gaming_category_only": true,
+    "audio_languages": [],
+    "exclude_title_words": [
+      "trailer", "reaction", "react", "reacts", "reacting", "review", "reviewer", "analisis", "before you buy",
+      "ama", "q&a", "q a", "how long", "interview",
+      "leak", "leaked", "leaks", "rumor", "rumour", "rumors", "theory", "theories",
+      "prediction", "predictions", "expectations", "everything we know", "news",
+      "concept", "fan made", "fanmade", "recreated", "remake", "remastered", "mod", "mods",
+      "unreal engine", "ue5", "ai generated", "fake",
+      "vs", "versus", "comparison", "compared", "tier list", "ranking",
+      "price", "pre-order", "preorder", "release date", "unboxing", "podcast",
+      "gta 5", "gta v", "gta online", "rdr2", "red dead", "minecraft", "roblox", "fortnite"
+    ]
+  },
 
   "keywords": ["gta 6", "gta6", "gta vi", "gtavi", "grand theft auto vi", "grand theft auto 6", "leonida"],
 
