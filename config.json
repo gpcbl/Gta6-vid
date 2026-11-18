@@ -1,0 +1,27 @@
+{
+  "title": "GTA VI Feed",
+  "description": "The most-watched GTA 6 videos on YouTube, ranked by views and updated every two hours.",
+  "link": "https://gpcbl.github.io/gta6-vid/",
+
+  "search_query": "GTA 6|\"GTA VI\"|\"Grand Theft Auto VI\"",
+  "search_windows": [
+    {"label": "Past day", "days": 1},
+    {"label": "This week", "days": 7},
+    {"label": "This month", "days": 30},
+    {"label": "All time", "days": null}
+  ],
+  "results_per_search": 50,
+
+  "keywords": ["gta 6", "gta6", "gta vi", "gtavi", "grand theft auto vi", "grand theft auto 6", "leonida"],
+
+  "keep_recent_days": 30,
+  "keep_top_all_time": 150,
+
+  "channels": [
+    {"name": "Rockstar Games", "id": "UC6VcWc1rAoWdBCM0JxrRQ3A", "official": true},
+    {"name": "TGG", "id": "UC72PuhDwKtZ5MikpGNhPAtA"},
+    {"name": "DarkViperAU", "id": "UCV6mNrW8CrmWtcxWfQXy11g"},
+    {"name": "Saintsfan", "id": "UC6RBXQeIq7YSpHe9HIxAbPw"},
+    {"name": "JeffTutorials", "id": "UCqxhclQP0EUOg4afJCObrqg"}
+  ]
+}

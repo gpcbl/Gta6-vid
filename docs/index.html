@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GTA VI Feed</title>
+<meta name="description" content="The most-watched GTA 6 videos on YouTube, ranked by views and updated every two hours.">
+<meta name="theme-color" content="#120d16">
+<link rel="alternate" type="application/rss+xml" title="GTA VI Feed" href="feed.xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#120d16; --surface:#1c1522; --line:#2f2537; --fg:#f3edf5; --muted:#a397ab;
+  --hot:#ff4f8b; --sun:#ffb347; --accent-soft:#3a1d2c; --save:#ffb347;
+  --grad:linear-gradient(95deg,#ff4f8b 0%,#ff8a5c 55%,#ffb347 100%);
+  --display:"Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body:"Instrument Sans", system-ui, -apple-system, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root{
+  --bg:#fbf7f4; --surface:#ffffff; --line:#eadfd8; --fg:#1d1420; --muted:#6e6272;
+  --hot:#d8245f; --sun:#c46a00; --accent-soft:#fde6ee; --save:#c46a00; color-scheme:light}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.wrap{max-width:760px;margin:0 auto;padding:22px 16px 56px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px;padding-bottom:14px;border-bottom:2px solid transparent;border-image:var(--grad) 1}
+h1{font-family:var(--display);font-stretch:78%;font-weight:800;font-size:clamp(2.2rem,8vw,3rem);line-height:.95;margin:0;letter-spacing:-.01em;text-transform:uppercase}
+h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-family:var(--mono);font-size:.74rem;color:var(--muted);margin-top:8px;text-transform:uppercase;letter-spacing:.07em}
+.updated{font-size:.8rem;color:var(--muted);text-align:right}
+.tools{display:flex;gap:10px;align-items:center;margin-top:14px}
+.search{flex:1;min-width:0;font:inherit;font-size:.95rem;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+.toggle{flex:none;display:flex;align-items:center;gap:6px;font-size:.84rem;color:var(--muted);cursor:pointer;user-select:none}
+.toggle input{accent-color:var(--hot);width:16px;height:16px}
+.rail{position:sticky;top:0;z-index:3;background:var(--bg);display:flex;gap:6px;overflow-x:auto;padding:12px 0;border-bottom:1px solid var(--line);scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rail button{flex:none;font:inherit;font-size:.86rem;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:5px 12px;cursor:pointer}
+.rail button[aria-pressed="true"]{background:var(--grad);color:#1a0d14;border-color:transparent;font-weight:600}
+.rail .n{font-family:var(--mono);font-size:.72rem;opacity:.7;margin-left:4px}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--hot);outline-offset:2px}
+.status{font-size:.84rem;color:var(--muted);margin:14px 0 2px}
+.status b{color:var(--fg);font-weight:600}
+ol{list-style:none;margin:0;padding:0}
+li{display:grid;grid-template-columns:auto 168px minmax(0,1fr) auto;gap:4px 12px;align-items:start;padding:14px 0;border-bottom:1px solid var(--line)}
+.rank{font-family:var(--display);font-stretch:78%;font-weight:800;font-size:1.35rem;line-height:1;color:var(--muted);min-width:1.6em;text-align:right;padding-top:2px}
+li:nth-child(-n+3) .rank{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.thumb{position:relative;display:block;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.dur{position:absolute;right:5px;bottom:5px;font-family:var(--mono);font-size:.68rem;background:rgba(0,0,0,.78);color:#fff;padding:1px 5px;border-radius:4px}
+.dur.live{background:#e0003c}
+.info{min-width:0}
+h2{font-size:1rem;font-weight:600;line-height:1.3;margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+h2 a{color:inherit;text-decoration:none}
+h2 a:hover{text-decoration:underline;text-underline-offset:3px}
+.meta{margin-top:5px;font-size:.8rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center}
+.views{font-family:var(--mono);font-size:.78rem;color:var(--fg)}
+.badge{font-size:.64rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--hot);background:var(--accent-soft);padding:1px 6px;border-radius:4px}
+.save{border:0;background:none;cursor:pointer;color:var(--muted);font-size:1.3rem;line-height:1;padding:2px 4px}
+.save[aria-pressed="true"]{color:var(--save)}
+.empty{padding:40px 0;color:var(--muted)}
+footer{margin-top:28px;font-size:.8rem;color:var(--muted)}
+footer a{color:var(--hot)}
+@media (max-width:560px){
+  li{grid-template-columns:auto 128px minmax(0,1fr);gap:4px 10px}
+  .rank{font-size:1.1rem;min-width:1.4em}
+  .save{grid-column:3;justify-self:start;padding:0;font-size:1.15rem}
+  h2{font-size:.93rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1><span>GTA VI</span> Feed</h1>
+      <div class="sub" id="sub">Most-watched on YouTube</div>
+    </div>
+    <div class="updated" id="updated"></div>
+  </header>
+  <div class="tools">
+    <input class="search" id="q" type="search" placeholder="Search videos or channels" aria-label="Search videos or channels">
+    <label class="toggle"><input type="checkbox" id="noshorts"> Hide Shorts</label>
+  </div>
+  <nav class="rail" id="rail" aria-label="Views"></nav>
+  <p class="status" id="status">Loading videos…</p>
+  <ol id="list"></ol>
+  <footer id="foot">View counts come from YouTube and refresh every two hours. Stars are saved on this device. <a href="feed.xml">RSS feed</a></footer>
+</div>
+<script>
+const HOUR=36e5, DAY=24*HOUR;
+const age=v=>v.published?Date.now()-new Date(v.published):Infinity;
+const byViews=(a,b)=>(b.views||0)-(a.views||0);
+// "Hot" = views per hour since upload, for videos from the past week.
+const heat=v=>(v.views||0)/Math.max(age(v)/HOUR,2);
+const TABS=[
+  {name:"Hot",note:"fastest-growing, past 7 days",keep:v=>age(v)<=7*DAY,sort:(a,b)=>heat(b)-heat(a)},
+  {name:"Today",note:"most viewed, past 24 hours",keep:v=>age(v)<=DAY,sort:byViews},
+  {name:"This week",note:"most viewed, past 7 days",keep:v=>age(v)<=7*DAY,sort:byViews},
+  {name:"This month",note:"most viewed, past 30 days",keep:v=>age(v)<=30*DAY,sort:byViews},
+  {name:"All time",note:"most viewed ever",keep:()=>true,sort:byViews},
+  {name:"Newest",note:"latest uploads",keep:()=>true,sort:(a,b)=>age(a)-age(b)},
+  {name:"Rockstar",note:"official Rockstar Games videos",keep:v=>v.official,sort:(a,b)=>age(a)-age(b)},
+  {name:"Saved",note:"starred on this device",keep:v=>state.saved.has(v.id),sort:byViews},
+];
+const state={tab:"Hot",q:"",noShorts:false,items:[],saved:new Set()};
+try{state.saved=new Set(JSON.parse(localStorage.getItem("gta6-saved")||"[]"));state.noShorts=localStorage.getItem("gta6-noshorts")==="1"}catch(e){}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const okId=id=>/^[\w-]{6,20}$/.test(id||"");
+
+function compact(n){
+  if(n==null)return"";
+  if(n<1e3)return String(n);
+  const [d,s]=n>=1e9?[1e9,"B"]:n>=1e6?[1e6,"M"]:[1e3,"K"];
+  const x=n/d; return (x<10?x.toFixed(1).replace(/\.0$/,""):Math.round(x))+s;
+}
+function ago(iso){
+  if(!iso)return"";
+  const m=Math.round((Date.now()-new Date(iso))/60000);
+  if(m<1)return"just now"; if(m<60)return m+" min ago";
+  const h=Math.round(m/60); if(h<24)return h+" h ago";
+  const d=Math.round(h/24); if(d<31)return d+(d===1?" day ago":" days ago");
+  const mo=Math.round(d/30.4); if(mo<12)return mo+(mo===1?" month ago":" months ago");
+  const y=Math.round(d/365); return y+(y===1?" year ago":" years ago");
+}
+function clock(s){
+  if(s==null)return"";
+  const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=String(s%60).padStart(2,"0");
+  return h?`${h}:${String(m).padStart(2,"0")}:${sec}`:`${m}:${sec}`;
+}
+function decode(s){const t=document.createElement("textarea");t.innerHTML=s||"";return t.value}
+
+function render(){
+  const q=state.q.trim().toLowerCase();
+  const base=state.items.filter(v=>(!state.noShorts||!v.short)&&(!q||(v.title+" "+v.channel).toLowerCase().includes(q)));
+  $("rail").innerHTML=TABS.map(t=>`<button type="button" data-t="${esc(t.name)}" aria-pressed="${t.name===state.tab}">${esc(t.name)}<span class="n">${base.filter(t.keep).length}</span></button>`).join("");
+  const tab=TABS.find(t=>t.name===state.tab)||TABS[0];
+  const list=base.filter(tab.keep).sort(tab.sort);
+  $("status").innerHTML=`<b>${list.length}</b> ${list.length===1?"video":"videos"} · ${esc(tab.note)}${q?` · matching “${esc(state.q.trim())}”`:""}`;
+  if(!list.length){
+    $("list").innerHTML=`<p class="empty">${tab.name==="Saved"?"Tap the star on any video to keep it here.":tab.name==="Today"?"No GTA 6 uploads in the past 24 hours yet.":"No videos match."}</p>`;
+    return;
+  }
+  $("list").innerHTML=list.slice(0,150).map((v,i)=>{
+    const url=`https://www.youtube.com/watch?v=${v.id}`;
+    const on=state.saved.has(v.id);
+    const live=v.live==="live"?'<span class="dur live">LIVE</span>':v.live==="upcoming"?'<span class="dur live">SOON</span>':v.duration!=null?`<span class="dur">${clock(v.duration)}</span>`:"";
+    const perHour=tab.name==="Hot"&&v.views?` · ${compact(Math.round(heat(v)))}/h`:"";
+    return `<li>
+      <span class="rank">${i+1}</span>
+      <a class="thumb" href="${url}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="https://i.ytimg.com/vi/${v.id}/mqdefault.jpg" alt="" loading="lazy">${live}</a>
+      <div class="info">
+        <h2><a href="${url}" target="_blank" rel="noopener">${esc(decode(v.title))}</a></h2>
+        <div class="meta">
+          ${v.views!=null?`<span class="views">${compact(v.views)} views${perHour}</span>`:""}
+          <span>${esc(decode(v.channel))}</span>
+          <span>${esc(ago(v.published))}</span>
+          ${v.official?'<span class="badge">Official</span>':""}${v.short?'<span class="badge">Short</span>':""}
+        </div>
+      </div>
+      <button type="button" class="save" data-id="${esc(v.id)}" aria-pressed="${on}" aria-label="${on?"Remove from saved":"Save video"}">${on?"★":"☆"}</button>
+    </li>`;
+  }).join("");
+}
+
+$("rail").addEventListener("click",e=>{const b=e.target.closest("button[data-t]");if(b){state.tab=b.dataset.t;render()}});
+$("q").addEventListener("input",e=>{state.q=e.target.value;render()});
+$("noshorts").checked=state.noShorts;
+$("noshorts").addEventListener("change",e=>{state.noShorts=e.target.checked;try{localStorage.setItem("gta6-noshorts",state.noShorts?"1":"0")}catch(err){}render()});
+$("list").addEventListener("click",e=>{
+  const b=e.target.closest(".save");if(!b)return;
+  const id=b.dataset.id;state.saved.has(id)?state.saved.delete(id):state.saved.add(id);
+  try{localStorage.setItem("gta6-saved",JSON.stringify([...state.saved]))}catch(err){}
+  render();
+});
+
+// Countdown in the subtitle until launch (Nov 19, 2026), then a plain label.
+const launch=new Date("2026-11-19T00:00:00-05:00");
+const days=Math.ceil((launch-Date.now())/DAY);
+$("sub").textContent=days>1?`${days} days to launch · most-watched on YouTube`:days===1?"Launches tomorrow · most-watched on YouTube":"Out now · most-watched on YouTube";
+
+fetch("videos.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{
+  state.items=(d.items||[]).filter(v=>okId(v.id));
+  $("updated").textContent=d.updated?`Updated ${ago(d.updated)}`:"";
+  if(d.source==="rss")$("foot").insertAdjacentHTML("afterbegin","Showing videos from followed channels only. ");
+  render();
+}).catch(()=>{$("status").textContent="Couldn't load videos. Check that the Update video feed workflow has run, then refresh."});
+</script>
+</body>
+</html>

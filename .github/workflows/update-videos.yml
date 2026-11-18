@@ -1,0 +1,42 @@
+name: Update video feed
+
+on:
+  schedule:
+    # Every 2 hours (GitHub cron runs in UTC and may start a few minutes late)
+    - cron: "0 */2 * * *"
+  workflow_dispatch: # adds a "Run workflow" button for manual runs
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-videos
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Fetch GTA 6 videos
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python fetch_videos.py
+
+      - name: Commit updated feed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
+          git add docs/videos.json docs/feed.xml
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Update video feed"
+            git push
+          fi
