@@ -2,10 +2,10 @@ name: Update video feed
 
 on:
   schedule:
-    # Every hour at :07 (GitHub cron runs in UTC and may start a few minutes late).
+    # Every hour at :17 (GitHub cron runs in UTC and may start a few minutes late).
     # Each search in config.json has its own "every_hours", so most runs only do
     # the two fresh-gameplay searches.
-    - cron: "7 * * * *"
+    - cron: "17 * * * *"
   workflow_dispatch: # adds a "Run workflow" button for manual runs
 
 permissions:

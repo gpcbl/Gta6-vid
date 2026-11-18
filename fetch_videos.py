@@ -220,6 +220,21 @@ def plain_words(text):
     return re.sub(r"[^a-z0-9]+", " ", text).strip()
 
 
+def non_english_hint(title, words):
+    """Why a title looks non-English despite its English tag, or None.
+    YouTube's language tag is set by the creator and is sometimes wrong."""
+    letters = [c for c in title if c.isalpha()]
+    if letters:
+        other = sum(1 for c in letters if not unicodedata.name(c, "").startswith("LATIN"))
+        if other / len(letters) > 0.3:
+            return "non-Latin title"
+    padded = " " + plain_words(title) + " "
+    for word in words:
+        if " " + plain_words(word) + " " in padded:
+            return f"title says '{word}'"
+    return None
+
+
 def gameplay_check(v, screen):
     """Return None if the video passes the gameplay screen, else the reason it failed.
 
@@ -355,7 +370,9 @@ def main():
             print(f"Dropped {len(dropped)} videos not in {', '.join(sorted(langs))}.")
 
     screen = config.get("gameplay_screen", {})
+    lang_words = config.get("non_english_title_words", [])
     for v in videos.values():
+        v["lang_flag"] = non_english_hint(v.get("title", ""), lang_words)
         v["official"] = v.get("channel_id") in official
         if v.get("live", "none") != "none":
             v["short"] = False  # live and upcoming streams report no length
@@ -363,6 +380,7 @@ def main():
             v["short"] = v["duration"] <= 60 or v.get("short", False)
         v["gameplay"] = gameplay_check(v, screen) is None
     print(f"Gameplay screen: {sum(v['gameplay'] for v in videos.values())} videos passed.")
+    print(f"Flagged as likely non-English: {sum(bool(v['lang_flag']) for v in videos.values())}.")
 
     videos = prune(videos, config)
     items = sorted(videos.values(), key=lambda v: v.get("views") or 0, reverse=True)

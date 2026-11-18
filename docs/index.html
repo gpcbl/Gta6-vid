@@ -34,6 +34,7 @@ h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text
 .updated{font-size:.8rem;color:var(--muted);text-align:right}
 .tools{display:flex;gap:10px;align-items:center;margin-top:14px}
 .search{flex:1;min-width:0;font:inherit;font-size:.95rem;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+.toggles{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px}
 .toggle{flex:none;display:flex;align-items:center;gap:6px;font-size:.84rem;color:var(--muted);cursor:pointer;user-select:none}
 .toggle input{accent-color:var(--hot);width:16px;height:16px}
 .rail{position:sticky;top:0;z-index:3;background:var(--bg);display:flex;gap:6px;overflow-x:auto;padding:12px 0;border-bottom:1px solid var(--line);scrollbar-width:none}
@@ -64,6 +65,7 @@ h2 a{color:inherit;text-decoration:none}
 h2 a:hover{text-decoration:underline;text-underline-offset:3px}
 .meta{margin-top:5px;font-size:.8rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center}
 .views{font-family:var(--mono);font-size:.78rem;color:var(--fg)}
+.badge.flag{color:var(--sun);background:none;border:1px solid currentColor;padding:0 5px}
 .badge{font-size:.64rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--hot);background:var(--accent-soft);padding:1px 6px;border-radius:4px}
 .save{border:0;background:none;cursor:pointer;color:var(--muted);font-size:1.3rem;line-height:1;padding:2px 4px}
 .save[aria-pressed="true"]{color:var(--save)}
@@ -89,7 +91,10 @@ footer a{color:var(--hot)}
   </header>
   <div class="tools">
     <input class="search" id="q" type="search" placeholder="Search videos or channels" aria-label="Search videos or channels">
+  </div>
+  <div class="toggles">
     <label class="toggle"><input type="checkbox" id="noshorts"> Hide Shorts</label>
+    <label class="toggle"><input type="checkbox" id="noflag"> Hide likely non-English</label>
   </div>
   <nav class="rail" id="rail" aria-label="Views"></nav>
   <div class="sorts" id="sorts" hidden><span>Sort</span></div>
@@ -116,8 +121,8 @@ const TABS=[
   {name:"Rockstar",note:"official Rockstar Games videos",keep:v=>v.official,sort:(a,b)=>age(a)-age(b)},
   {name:"Saved",note:"starred on this device",keep:v=>state.saved.has(v.id),sort:byViews},
 ];
-const state={tab:"Gameplay",gsort:"Rising",q:"",noShorts:false,items:[],saved:new Set()};
-try{state.saved=new Set(JSON.parse(localStorage.getItem("gta6-saved")||"[]"));state.noShorts=localStorage.getItem("gta6-noshorts")==="1"}catch(e){}
+const state={tab:"Gameplay",gsort:"Rising",q:"",noShorts:false,noFlag:true,items:[],saved:new Set()};
+try{state.saved=new Set(JSON.parse(localStorage.getItem("gta6-saved")||"[]"));state.noShorts=localStorage.getItem("gta6-noshorts")==="1";state.noFlag=localStorage.getItem("gta6-noflag")!=="0"}catch(e){}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const okId=id=>/^[\w-]{6,20}$/.test(id||"");
@@ -146,7 +151,7 @@ function decode(s){const t=document.createElement("textarea");t.innerHTML=s||"";
 
 function render(){
   const q=state.q.trim().toLowerCase();
-  const base=state.items.filter(v=>(!state.noShorts||!v.short)&&(!q||(v.title+" "+v.channel).toLowerCase().includes(q)));
+  const base=state.items.filter(v=>(!state.noShorts||!v.short)&&(!state.noFlag||!v.lang_flag)&&(!q||(v.title+" "+v.channel).toLowerCase().includes(q)));
   $("rail").innerHTML=TABS.map(t=>`<button type="button" data-t="${esc(t.name)}" aria-pressed="${t.name===state.tab}">${esc(t.name)}<span class="n">${base.filter(t.keep).length}</span></button>`).join("");
   const tab=TABS.find(t=>t.name===state.tab)||TABS[0];
   const isG=!!tab.g;
@@ -173,7 +178,7 @@ function render(){
           ${v.views!=null?`<span class="views">${compact(v.views)} views${perHour}</span>`:""}
           <span>${esc(decode(v.channel))}</span>
           <span>${esc(ago(v.published))}</span>${likes}
-          ${v.official?'<span class="badge">Official</span>':""}${v.short&&!v.live?.match(/live|upcoming/)?'<span class="badge">Short</span>':""}
+          ${v.official?'<span class="badge">Official</span>':""}${v.short&&!v.live?.match(/live|upcoming/)?'<span class="badge">Short</span>':""}${v.lang_flag?`<span class="badge flag" title="${esc(v.lang_flag)}">Not English?</span>`:""}
         </div>
       </div>
       <button type="button" class="save" data-id="${esc(v.id)}" aria-pressed="${on}" aria-label="${on?"Remove from saved":"Save video"}">${on?"★":"☆"}</button>
@@ -185,6 +190,8 @@ $("rail").addEventListener("click",e=>{const b=e.target.closest("button[data-t]"
 $("sorts").addEventListener("click",e=>{const b=e.target.closest("button[data-s]");if(b){state.gsort=b.dataset.s;render()}});
 $("q").addEventListener("input",e=>{state.q=e.target.value;render()});
 $("noshorts").checked=state.noShorts;
+$("noflag").checked=state.noFlag;
+$("noflag").addEventListener("change",e=>{state.noFlag=e.target.checked;try{localStorage.setItem("gta6-noflag",state.noFlag?"1":"0")}catch(err){}render()});
 $("noshorts").addEventListener("change",e=>{state.noShorts=e.target.checked;try{localStorage.setItem("gta6-noshorts",state.noShorts?"1":"0")}catch(err){}render()});
 $("list").addEventListener("click",e=>{
   const b=e.target.closest(".save");if(!b)return;

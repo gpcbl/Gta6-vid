@@ -2,6 +2,8 @@
 
 Tracks the most-watched English GTA 6 videos on YouTube. GitHub Actions updates it every hour, and a page on GitHub Pages lets you browse it.
 
+**Links:** every video links straight to its YouTube page (`youtube.com/watch?v=…`), which opens in a new tab or the YouTube app. Nothing is downloaded or re-hosted.
+
 **Page tabs:** Gameplay (screened, see below), Hot (most views per hour over the past week), Today, This week, This month, All time, Newest, Rockstar (official videos only), and Saved. There's also a search box and a Hide Shorts switch.
 
 **Output** (in the `docs/` folder):
@@ -27,6 +29,8 @@ Title words are only used to exclude videos, never required, because a lot of ga
 Passing videos are ranked **Rising** by default: views per hour since upload, which surfaces videos that are both new and popular. You can also sort by Most viewed or Newest. ## English only
 
 Every search asks YouTube for English results, and after each run any video whose language isn't in `languages` (in `config.json`) is dropped. The default is `["en", "zxx"]`: `zxx` is YouTube's tag for videos with no spoken language, which covers no-commentary gameplay with English titles. Remove `"zxx"` to drop those too, or set `languages` to `[]` to allow every language.
+
+Creators set their own language tag, so some non-English videos are tagged English. Each run flags a video as **Not English?** if most of its title is in a non-Latin script (Devanagari, Tamil, Arabic, Cyrillic and so on), or if the title names another language, using `non_english_title_words` in `config.json` (e.g. "Tamil", "Hindi", "Español"). Flagged videos are hidden on the page by default; turn off **Hide likely non-English** to see them with a badge.
 
 ## How it finds videos
 

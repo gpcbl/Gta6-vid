@@ -84,6 +84,13 @@
       "fortnite"
     ]
   },
+  "non_english_title_words": [
+    "tamil", "hindi", "telugu", "malayalam", "kannada", "bangla", "bengali", "urdu", "marathi",
+    "punjabi", "gujarati", "nepali", "sinhala", "espanol", "en espanol", "portugues", "pt br", "ptbr",
+    "indonesia", "filipino", "tagalog", "arabic", "deutsch", "francais", "italiano", "russian",
+    "turkce", "polski", "vietnam", "thai"
+  ],
+
   "keywords": [
     "gta 6",
     "gta6",
