@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GTA VI Feed</title>
-<meta name="description" content="The most-watched GTA 6 videos on YouTube, ranked by views and updated every two hours.">
+<meta name="description" content="The most-watched GTA 6 videos on YouTube, with screened gameplay updated every hour.">
 <meta name="theme-color" content="#120d16">
 <link rel="alternate" type="application/rss+xml" title="GTA VI Feed" href="feed.xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -96,7 +96,7 @@ footer a{color:var(--hot)}
   <p class="status" id="status">Loading videos…</p>
   <p class="screen" id="screen" hidden>Screened for gameplay: posted since launch and in the past 3 days, 5+ minutes long (or live), Gaming category, 10K+ views, and no trailers, reviews, reactions, leaks or comparisons in the title. Rising = views per hour since upload.</p>
   <ol id="list"></ol>
-  <footer id="foot">View counts come from YouTube and refresh every two hours. Stars are saved on this device. <a href="feed.xml">RSS feed</a></footer>
+  <footer id="foot">View counts come from YouTube and refresh every hour. Stars are saved on this device. <a href="feed.xml">RSS feed</a></footer>
 </div>
 <script>
 const HOUR=36e5, DAY=24*HOUR;
@@ -106,7 +106,8 @@ const byViews=(a,b)=>(b.views||0)-(a.views||0);
 const heat=v=>(v.views||0)/Math.max(age(v)/HOUR,2);
 const SORTS={"Rising":(a,b)=>heat(b)-heat(a),"Most viewed":byViews,"Newest":(a,b)=>age(a)-age(b)};
 const TABS=[
-  {name:"Gameplay",note:"screened gameplay since launch, past 3 days",keep:v=>v.gameplay,sort:null},
+  {name:"English gameplay",note:"screened gameplay in English, past 3 days",keep:v=>v.gameplay&&v.lang==="en",sort:null,g:true},
+  {name:"All gameplay",note:"screened gameplay in every language, past 3 days",keep:v=>v.gameplay,sort:null,g:true},
   {name:"Hot",note:"fastest-growing, past 7 days",keep:v=>age(v)<=7*DAY,sort:(a,b)=>heat(b)-heat(a)},
   {name:"Today",note:"most viewed, past 24 hours",keep:v=>age(v)<=DAY,sort:byViews},
   {name:"This week",note:"most viewed, past 7 days",keep:v=>age(v)<=7*DAY,sort:byViews},
@@ -116,7 +117,7 @@ const TABS=[
   {name:"Rockstar",note:"official Rockstar Games videos",keep:v=>v.official,sort:(a,b)=>age(a)-age(b)},
   {name:"Saved",note:"starred on this device",keep:v=>state.saved.has(v.id),sort:byViews},
 ];
-const state={tab:"Gameplay",gsort:"Rising",q:"",noShorts:false,items:[],saved:new Set()};
+const state={tab:"English gameplay",gsort:"Rising",q:"",noShorts:false,items:[],saved:new Set()};
 try{state.saved=new Set(JSON.parse(localStorage.getItem("gta6-saved")||"[]"));state.noShorts=localStorage.getItem("gta6-noshorts")==="1"}catch(e){}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -149,7 +150,7 @@ function render(){
   const base=state.items.filter(v=>(!state.noShorts||!v.short)&&(!q||(v.title+" "+v.channel).toLowerCase().includes(q)));
   $("rail").innerHTML=TABS.map(t=>`<button type="button" data-t="${esc(t.name)}" aria-pressed="${t.name===state.tab}">${esc(t.name)}<span class="n">${base.filter(t.keep).length}</span></button>`).join("");
   const tab=TABS.find(t=>t.name===state.tab)||TABS[0];
-  const isG=tab.name==="Gameplay";
+  const isG=!!tab.g;
   $("sorts").hidden=$("screen").hidden=!isG;
   $("sorts").innerHTML="<span>Sort</span>"+Object.keys(SORTS).map(k=>`<button type="button" data-s="${k}" aria-pressed="${k===state.gsort}">${k}</button>`).join("");
   const list=base.filter(tab.keep).sort(isG?SORTS[state.gsort]:tab.sort);
@@ -200,7 +201,7 @@ $("sub").textContent=days>1?`${days} days to launch · most-watched on YouTube`:
 
 fetch("videos.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{
   state.items=(d.items||[]).filter(v=>okId(v.id));
-  if(!state.items.some(v=>v.gameplay))state.tab="Hot";
+  if(!state.items.some(v=>v.gameplay&&v.lang==="en"))state.tab=state.items.some(v=>v.gameplay)?"All gameplay":"Hot";
   $("updated").textContent=d.updated?`Updated ${ago(d.updated)}`:"";
   if(d.source==="rss")$("foot").insertAdjacentHTML("afterbegin","Showing videos from followed channels only. ");
   render();

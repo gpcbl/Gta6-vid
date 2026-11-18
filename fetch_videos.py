@@ -3,9 +3,9 @@
 Two sources, both optional, combined into one list:
 
 1. YouTube Data API search (needs a free API key in the YOUTUBE_API_KEY
-   environment variable). Searches all of YouTube for GTA 6 videos ordered by
-   view count, over several time windows (past day, week, month, all time),
-   then looks up fresh view, like and comment counts for every video kept.
+   environment variable). Runs the searches in config.json that are due this
+   hour (fresh-gameplay searches every hour, broader most-viewed searches
+   every few hours to save quota), then looks up fresh view, like and comment counts for every video kept.
 2. Channel RSS feeds listed in config.json (no key needed). Each feed gives a
    channel's 15 latest uploads with their view counts; only GTA 6 videos are
    kept.
@@ -107,10 +107,20 @@ def is_gta6(text, keywords):
 
 # ---------------------------------------------------------------- API source
 
-def search_api(config, key, log):
+def search_due(search, full_run):
+    """Searches run on their own schedule to save quota: a search with
+    "every_hours": 6 runs only when the UTC hour is a multiple of 6.
+    Manual runs (FULL_RUN=1) run every search."""
+    every = search.get("every_hours", 1)
+    return full_run or every <= 1 or now().hour % every == 0
+
+
+def search_api(config, key, log, full_run=False):
     """Video IDs from the view-count-ordered searches listed in config.json."""
     ids = []
     for search in config["searches"]:
+        if not search_due(search, full_run):
+            continue
         params = {
             "part": "id",
             "type": "video",
@@ -126,6 +136,8 @@ def search_api(config, key, log):
             params["videoDuration"] = search["duration"]  # short <4 min, medium 4-20, long >20
         if search.get("gaming_only"):
             params["videoCategoryId"] = GAMING
+        if search.get("language"):
+            params["relevanceLanguage"] = search["language"]
         try:
             data = api("search", key, **params)
         except FetchError as exc:
@@ -321,7 +333,8 @@ def main():
 
     if key:
         print("YouTube search:")
-        ids = search_api(config, key, log)
+        full_run = os.environ.get("FULL_RUN") == "1"
+        ids = search_api(config, key, log, full_run)
         details = lookup_api(ids + list(videos), key, log)
         if details is not None:
             for vid, v in details.items():
@@ -342,7 +355,9 @@ def main():
         elif v.get("duration"):
             v["short"] = v["duration"] <= 60 or v.get("short", False)
         v["gameplay"] = gameplay_check(v, screen) is None
-    print(f"Gameplay screen: {sum(v['gameplay'] for v in videos.values())} videos passed.")
+    passed = [v for v in videos.values() if v["gameplay"]]
+    english = sum(v.get("lang") == "en" for v in passed)
+    print(f"Gameplay screen: {len(passed)} videos passed, {english} in English.")
 
     videos = prune(videos, config)
     items = sorted(videos.values(), key=lambda v: v.get("views") or 0, reverse=True)
